@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Todo List</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <!-- <link rel="stylesheet" href="./style.css"> -->
+    <style>
+        .container {
+            width: 600px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container text-center mt-5">
+        <h3>Todo List</h3>
+        <form action="/addtodos" method="POST" class="input-group">
+            <input type="text" class="form-control" placeholder="type here..." name="name">
+            <input type="submit" value="Add Todo" class="btn btn-primary input-group-append">
+        </form>
+        <div id="todos"></div>
+        <div id="edit-todo"></div>
+    </div>
+
+    <script>
+     function loadAllTodos(){
+        fetch('/todos')
+        .then(res => res.json())
+        .then(data => {
+            const todos = document.getElementById("todos");
+            todos.innerHTML = "";
+            data.forEach( td => {
+                const div = document.createElement('div')
+                div.innerHTML = `<div class="mt-3 p-2 bg-dark text-light rounded d-flex align-items-center justify-content-between">
+                        <div><h5 class="float-left text-capitalize">${td.name}</h5></div>
+                        <div>
+                            <button onclick="editTodo('${td._id}')" class="btn btn-success">Edit</button>
+                            <button onclick="deleteTodo( event, '${td._id}')" class="btn btn-danger">Delete</button>
+                        </div>
+                    </div>`
+                todos.appendChild(div);
+            });  
+        })
+     };
+
+    loadAllTodos();
+
+    function editTodo(id){
+        fetch(`/edit/${id}`)
+        .then(res => res.json())
+        .then(data => {
+            const container = document.getElementById('edit-todo')
+            container.innerHTML = `<h5 class="mt-4">Update your Todo</h5>
+                <div class="input-group mt-3">
+                    <input class="form-control" value="${data.name}" name="name" id="todoName">
+                    <input onclick="updateTodo('${data._id}')" type="submit" value="update" class="btn btn-info px-3 input-group-append">
+                </div>`
+    })}
+
+    function updateTodo(id) {
+        const name = document.getElementById('todoName').value
+        const todo = {id, name};
+        console.log(todo)
+        fetch(`/update/${id}`, {
+            method: "PATCH",
+            headers: {'Content-type': 'application/json'},
+            body: JSON.stringify(todo)
+        })
+        .then(res=> res.json())
+        .then(data => {
+            if(data){
+                loadAllTodos();
+                document.getElementById('edit-todo').innerHTML = ""
+            }
+        })}
+
+
+    function deleteTodo(event, id){
+        console.log(event.target.parentNode)
+         fetch(`/delete/${id}`, {
+             method: "DELETE"
+         })
+         .then(res => res.json())
+         .then(data => {
+             if(data){
+                loadAllTodos()
+             }
+         })
+     }
+
+    </script>
+</body>
+
+</html>
